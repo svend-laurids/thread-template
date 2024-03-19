@@ -59,7 +59,7 @@ struct String{
 	int length;
 };
 struct arg_struct{
-	struct String* data;
+	struct String** data;
 	int* datalength;
 };
 void string_print(struct String string)
@@ -77,7 +77,7 @@ void *threadfunction(void *arguments)
 	while(1)
 	{
 		printf("%d of %d : ", (i + 1), *(args->datalength));	
-		string_print(*(args->data + i));
+		string_print(*(*(args->data) + i));
 		if (i == (*(args->datalength)) - 1)
 			i = 0;
 		else
@@ -88,17 +88,17 @@ void *threadfunction(void *arguments)
 int main()
 {
 	int datalength = 1;	
-	#define DATA_LIMIT 128
-	struct String data[DATA_LIMIT];
-	//struct String* data = (struct String*)malloc(sizeof(struct String) * datalength);
-	if (data == NULL)
+	//Double pointer to make sure the pointer address given to the thread doesn't change!
+	struct String** data;
+	(*data) = (struct String*)malloc(sizeof(struct String) * datalength);
+	if ((*data) == NULL)
 	{
 		printf("ERROR : Couldn't malloc()\n");
 		return 1;
 	}
-	(data + 0)->text = malloc(sizeof(char) * 5);
-	(*(data + 0)).length = 5;
-	strncpy((data + 0)->text, "test\n", 5); 
+	(*data)->text = malloc(sizeof(char) * 5);
+	(*data)->length = 5;
+	strncpy((*data)->text, "test\n", 5); 
 
 	struct arg_struct args;
 	args.data = data;
@@ -117,21 +117,15 @@ int main()
 		charCount = getline(&lineBuffer, &lineLength, stdin); 
 		//Add new input to list of strings
 		datalength++;	
-		if (datalength == DATA_LIMIT)
-		{
-			printf("ERROR : DATA_LIMIT has been reached\n");
-			exit(1);
-		}
-		//data = realloc(data, sizeof(struct String) * datalength);
-		if (data == NULL)
+		(*data) = realloc((*data), sizeof(struct String) * datalength);
+		if ((*data) == NULL)
 		{
 			printf("ERROR : Couldn't realloc()\n");
 			exit(1);
 		}
-		(data + datalength - 1)->text = malloc(sizeof(char) * (size_t)charCount);
-		(data + datalength - 1)->length = (int)charCount;
-		strncpy((data + datalength -1)->text, lineBuffer, (size_t)charCount); 
-		(data + datalength -1)->text = lineBuffer;
+		((*data) + datalength - 1)->text = malloc(sizeof(char) * (size_t)charCount);
+		((*data) + datalength - 1)->length = (int)charCount;
+		strncpy(((*data) + datalength - 1)->text, lineBuffer, (size_t)charCount); 
 	}
 	return 0;
 }
